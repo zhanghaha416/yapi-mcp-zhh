@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "yapi-mock": {
+      "command": "node",
+      "args": ["/opt/yapi-mock-mcp/dist/server/mcp-stdio.js"],
+      "env": {
+        "YAPI_BASE_URL": "http://yapi.internal.example.com",
+        "YAPI_PROJECT_ID": "123",
+        "YAPI_TOKEN": "replace-with-your-project-token",
+        "YAPI_EMAIL": "you@corp.com",
+        "YAPI_PASSWORD": "replace-me"
+      }
+    }
+  }
+}
+

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "yapi-mock": {
+      "url": "http://yapi-mcp.internal.example.com:43181/mcp",
+      "headers": {
+        "Authorization": "Bearer replace-with-MCP_HTTP_AUTH_TOKEN"
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "name": "yapi-mock-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for reading and writing intranet YApi mock docs, advanced mock scripts, and mock cases.",
+  "type": "module",
+  "bin": {
+    "yapi-mock-mcp": "./dist/server/mcp-stdio.js"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"tsx watch src/server/http.ts\" \"vite --port 41791 --strictPort\"",
+    "build": "tsc -p tsconfig.server.json && vite build",
+    "start": "node dist/server/http.js",
+    "mcp": "node dist/server/mcp-stdio.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.json --noEmit"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "share",
+    ".env.example"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.0",
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "hono": "^4.9.6",
+    "undici": "^7.15.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.12",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "concurrently": "^9.2.1",
+    "lucide-react": "^0.542.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "tailwindcss": "^4.1.12",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.4",
+    "vitest": "^3.2.4"
+  }
+}
