@@ -10,31 +10,7 @@
 
 客户端只走 MCP；本进程把工具转成对 YApi 的 HTTP。stdio 和 HTTP 共用同一套 Tools / `YapiClient`。
 
-```mermaid
-flowchart LR
-  subgraph clients [MCP 客户端]
-    C[Cursor / Claude / Codex]
-    W[WorkBuddy]
-  end
-
-  subgraph this [yapi-mcp-zhh]
-    P[stdio 或 HTTP /mcp]
-    M[MCP Server]
-    T[Tools]
-    Y[YapiClient]
-  end
-
-  subgraph dest [数据]
-    A[YApi]
-    D[内存演示]
-  end
-
-  C --> P
-  W --> P
-  P --> M --> T --> Y
-  Y --> A
-  Y --> D
-```
+![架构](docs/architecture.svg)
 
 未配 `YAPI_BASE_URL` 或 `YAPI_DEMO=true` 时走演示，不写真实 YApi。`npm start` 额外提供浏览器演示台，和 MCP 是同一套 Tools。
 

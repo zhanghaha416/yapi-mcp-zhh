@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="460" viewBox="0 0 920 460" role="img" aria-labelledby="title desc">
+  <title id="title">yapi-mcp-zhh architecture</title>
+  <desc id="desc">MCP clients connect over stdio or HTTP to MCP Server, Tools, and YapiClient, which talk to YApi or an in-memory demo.</desc>
+  <rect width="920" height="460" fill="#ffffff"/>
+
+  <rect x="48" y="28" width="360" height="64" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="228" y="66" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#1f2328">Cursor / Claude / Codex</text>
+
+  <rect x="512" y="28" width="360" height="64" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="692" y="66" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#1f2328">WorkBuddy</text>
+
+  <line x1="228" y1="92" x2="228" y2="128" stroke="#57606a" stroke-width="1.5"/>
+  <polygon points="228,136 222,124 234,124" fill="#57606a"/>
+  <line x1="692" y1="92" x2="692" y2="128" stroke="#57606a" stroke-width="1.5"/>
+  <polygon points="692,136 686,124 698,124" fill="#57606a"/>
+  <line x1="228" y1="128" x2="692" y2="128" stroke="#57606a" stroke-width="1.5"/>
+  <line x1="460" y1="128" x2="460" y2="148" stroke="#57606a" stroke-width="1.5"/>
+  <polygon points="460,156 454,144 466,144" fill="#57606a"/>
+
+  <rect x="48" y="156" width="824" height="168" rx="12" fill="#ddf4ff" stroke="#54aeff"/>
+  <text x="68" y="184" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="600" fill="#0969da">yapi-mcp-zhh</text>
+
+  <rect x="72" y="204" width="196" height="88" rx="8" fill="#ffffff" stroke="#54aeff"/>
+  <text x="170" y="244" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#1f2328">stdio ? HTTP /mcp</text>
+  <text x="170" y="266" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#656d76">???</text>
+
+  <rect x="300" y="204" width="160" height="88" rx="8" fill="#ffffff" stroke="#54aeff"/>
+  <text x="380" y="256" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#1f2328">MCP Server</text>
+
+  <rect x="492" y="204" width="140" height="88" rx="8" fill="#ffffff" stroke="#54aeff"/>
+  <text x="562" y="256" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#1f2328">Tools</text>
+
+  <rect x="664" y="204" width="180" height="88" rx="8" fill="#ffffff" stroke="#54aeff"/>
+  <text x="754" y="256" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#1f2328">YapiClient</text>
+
+  <line x1="268" y1="248" x2="292" y2="248" stroke="#0969da" stroke-width="1.5"/>
+  <polygon points="300,248 290,243 290,253" fill="#0969da"/>
+  <line x1="460" y1="248" x2="484" y2="248" stroke="#0969da" stroke-width="1.5"/>
+  <polygon points="492,248 482,243 482,253" fill="#0969da"/>
+  <line x1="632" y1="248" x2="656" y2="248" stroke="#0969da" stroke-width="1.5"/>
+  <polygon points="664,248 654,243 654,253" fill="#0969da"/>
+
+  <line x1="460" y1="324" x2="460" y2="348" stroke="#57606a" stroke-width="1.5"/>
+  <line x1="228" y1="348" x2="692" y2="348" stroke="#57606a" stroke-width="1.5"/>
+  <line x1="228" y1="348" x2="228" y2="364" stroke="#57606a" stroke-width="1.5"/>
+  <polygon points="228,372 222,360 234,360" fill="#57606a"/>
+  <line x1="692" y1="348" x2="692" y2="364" stroke="#57606a" stroke-width="1.5"/>
+  <polygon points="692,372 686,360 698,360" fill="#57606a"/>
+
+  <rect x="48" y="372" width="360" height="56" rx="10" fill="#dafbe1" stroke="#4ac26b"/>
+  <text x="228" y="406" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#1a7f37">YApi</text>
+
+  <rect x="512" y="372" width="360" height="56" rx="10" fill="#fff8c5" stroke="#d4a72c"/>
+  <text x="692" y="406" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#9a6700">????</text>
+</svg>
