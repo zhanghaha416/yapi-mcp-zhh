@@ -30,7 +30,7 @@ describe("team HTTP MCP", () => {
     });
     expect(response.status).toBeLessThan(500);
     const json = (await response.json()) as { result?: { serverInfo?: { name?: string } } };
-    expect(json.result?.serverInfo?.name).toBe("yapi-mock-mcp");
+    expect(json.result?.serverInfo?.name).toBe("yapi-mcp-zhh");
   });
 
   it("rejects HTTP MCP without bearer when a token is configured", async () => {

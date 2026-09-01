@@ -1,10 +1,10 @@
 {
-  "name": "yapi-mock-mcp",
+  "name": "yapi-mcp-zhh",
   "version": "1.0.0",
   "description": "MCP server for reading and writing intranet YApi mock docs, advanced mock scripts, and mock cases.",
   "type": "module",
   "bin": {
-    "yapi-mock-mcp": "./dist/server/mcp-stdio.js"
+    "yapi-mcp-zhh": "./dist/server/mcp-stdio.js"
   },
   "scripts": {
     "dev": "concurrently -k \"tsx watch src/server/http.ts\" \"vite --port 41791 --strictPort\"",

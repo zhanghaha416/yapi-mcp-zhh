@@ -2,7 +2,7 @@
   "mcpServers": {
     "yapi-mock": {
       "command": "node",
-      "args": ["/opt/yapi-mock-mcp/dist/server/mcp-stdio.js"],
+      "args": ["/opt/yapi-mcp-zhh/dist/server/mcp-stdio.js"],
       "env": {
         "YAPI_BASE_URL": "http://yapi.internal.example.com",
         "YAPI_PROJECT_ID": "123",

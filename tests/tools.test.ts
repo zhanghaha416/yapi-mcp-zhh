@@ -60,6 +60,27 @@ describe("YApi mock tools against demo backend", () => {
     expect(hit.json).toEqual({ code: 1, msg: "failed" });
   });
 
+  it("creates an interface and can hit its mock URL", async () => {
+    const tools = demoTools();
+    const body = JSON.stringify({ ok: true, from: "create" });
+    const saved = await tools.createInterface({
+      title: "MCP ping",
+      path: "mcp/ping",
+      method: "GET",
+      catName: "用户",
+      resBody: body
+    });
+    expect(saved.dryRun).toBe(false);
+    if (saved.dryRun) {
+      return;
+    }
+    expect(saved.created.path).toBe("/mcp/ping");
+    expect(saved.created.method).toBe("GET");
+    expect(JSON.parse(saved.created.resBody)).toEqual({ ok: true, from: "create" });
+    const hit = await tools.callMock({ interfaceId: saved.created.id });
+    expect(hit.json).toEqual({ ok: true, from: "create" });
+  });
+
   it("lists projects without requiring a projectId argument", async () => {
     const tools = demoTools();
     const listed = await tools.listProjects();

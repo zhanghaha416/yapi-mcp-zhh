@@ -30,6 +30,11 @@ export const toolCatalog = [
     description: "按标题、路径、方法搜索当前 YApi 项目里的接口，不知道 interfaceId 时先用这个。"
   },
   {
+    name: "yapi_create_interface",
+    title: "新建接口",
+    description: "在 YApi 项目里新建一条接口。需要登录态。可顺带写入普通 Mock 返回体。"
+  },
+  {
     name: "yapi_get_interface_mock",
     title: "读取接口 Mock 文档",
     description: "读取接口的 res_body（普通 Mock 文档 / JSON Schema）、类型，以及可请求的 mock URL。"
@@ -74,7 +79,7 @@ export const toolCatalog = [
 
 export function createMcpServer(tools: YapiTools = createTools(loadConfig())) {
   const server = new McpServer({
-    name: "yapi-mock-mcp",
+    name: "yapi-mcp-zhh",
     version: "1.0.0"
   });
 
@@ -101,6 +106,34 @@ export function createMcpServer(tools: YapiTools = createTools(loadConfig())) {
     async ({ keyword, projectId }) => {
       try {
         return text(await tools.searchInterfaces(keyword, projectId));
+      } catch (error) {
+        return fail(error);
+      }
+    }
+  );
+
+  server.tool(
+    "yapi_create_interface",
+    "在指定 YApi 项目新建接口。需要登录账号。不传 catId 时优先用「公共分类」，否则用第一个分类。",
+    {
+      title: z.string().describe("接口标题，例如 MCP测试接口 ping"),
+      path: z.string().describe("接口路径，例如 /mcp/ping"),
+      method: z
+        .enum(["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
+        .optional()
+        .describe("默认 GET"),
+      projectId: z.number().optional(),
+      catId: z.number().optional().describe("分类 ID，可省略"),
+      catName: z.string().optional().describe("分类名称，例如 公共分类"),
+      desc: z.string().optional(),
+      resBody: z.string().optional().describe("可选，新建后写入的 Mock 返回体 JSON 字符串"),
+      resBodyType: z.enum(["json", "raw"]).optional(),
+      resBodyIsJsonSchema: z.boolean().optional(),
+      dryRun: z.boolean().optional()
+    },
+    async (args) => {
+      try {
+        return text(await tools.createInterface(args));
       } catch (error) {
         return fail(error);
       }

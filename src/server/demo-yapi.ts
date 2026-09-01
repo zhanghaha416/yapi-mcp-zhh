@@ -24,6 +24,7 @@ type DemoStore = {
   scripts: Map<number, AdvancedMock>;
   cases: MockCase[];
   nextCaseId: number;
+  nextInterfaceId: number;
 };
 
 function envelope<T>(data: T, errcode = 0, errmsg = "成功"): YapiEnvelope<T> {
@@ -159,7 +160,8 @@ function seed(): DemoStore {
         headers: []
       }
     ],
-    nextCaseId: 600
+    nextCaseId: 600,
+    nextInterfaceId: 8900
   };
 }
 
@@ -309,6 +311,63 @@ export function createDemoYapi() {
         res_body_is_json_schema: found.resBodyIsJsonSchema,
         req_body_type: found.reqBodyType,
         req_body_other: found.reqBodyOther
+      })
+    );
+  });
+
+  app.post("/api/interface/add", async (c) => {
+    if (!requireLogin(c.req.header("cookie"))) {
+      return c.json(envelope(null, 40011, "请登录..."));
+    }
+    const body = (await c.req.json()) as {
+      title?: string;
+      path?: string;
+      method?: string;
+      catid?: number;
+      project_id?: number;
+      desc?: string;
+    };
+    const title = (body.title || "").trim();
+    const method = (body.method || "GET").trim().toUpperCase();
+    const path = body.path?.startsWith("/") ? body.path : `/${body.path || ""}`;
+    const cat = store.cats.find((item) => item._id === Number(body.catid));
+    if (!title || !body.path) {
+      return c.json(envelope(null, 400, "请填写接口名称和路径"));
+    }
+    if (!cat) {
+      return c.json(envelope(null, 400, "不存在的分类"));
+    }
+    const dup = store.interfaces.find((item) => item.path === path && item.method === method);
+    if (dup) {
+      return c.json(envelope(null, 40022, `已存在的接口:${path}`));
+    }
+    const id = store.nextInterfaceId++;
+    const created: DemoInterface = {
+      id,
+      projectId: Number(body.project_id) || store.project._id,
+      catId: cat._id,
+      catName: cat.name,
+      title,
+      method,
+      path,
+      status: "undone",
+      resBodyType: "json",
+      resBodyIsJsonSchema: false,
+      resBody: "",
+      mockUrl: `/mock/${store.project._id}${path}`,
+      desc: body.desc
+    };
+    store.interfaces.push(created);
+    return c.json(
+      envelope({
+        _id: created.id,
+        title: created.title,
+        path: created.path,
+        method: created.method,
+        catid: created.catId,
+        project_id: created.projectId,
+        status: created.status,
+        res_body_type: created.resBodyType
       })
     );
   });

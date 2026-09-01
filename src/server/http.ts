@@ -53,6 +53,24 @@ export function createHttpApp(config: AppConfig, tools: YapiTools, demoApp?: Ret
             tool: name,
             data: await tools.searchInterfaces(String(args.keyword ?? ""), args.projectId as number | undefined)
           });
+        case "yapi_create_interface":
+          return c.json({
+            ok: true,
+            tool: name,
+            data: await tools.createInterface({
+              title: String(args.title ?? ""),
+              path: String(args.path ?? ""),
+              method: args.method as string | undefined,
+              projectId: args.projectId as number | undefined,
+              catId: args.catId as number | undefined,
+              catName: args.catName as string | undefined,
+              desc: args.desc as string | undefined,
+              resBody: args.resBody as string | undefined,
+              resBodyType: args.resBodyType as "json" | "raw" | undefined,
+              resBodyIsJsonSchema: args.resBodyIsJsonSchema as boolean | undefined,
+              dryRun: Boolean(args.dryRun)
+            })
+          });
         case "yapi_get_interface_mock":
           return c.json({
             ok: true,

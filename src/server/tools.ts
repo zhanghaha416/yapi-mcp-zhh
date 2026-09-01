@@ -184,6 +184,81 @@ export function createTools(config: AppConfig, client = new YapiClient(config)) 
       return getInterface(interfaceId, projectId);
     },
 
+    async createInterface(input: {
+      title: string;
+      path: string;
+      method?: string;
+      projectId?: number;
+      catId?: number;
+      catName?: string;
+      desc?: string;
+      resBody?: string;
+      resBodyType?: string;
+      resBodyIsJsonSchema?: boolean;
+      dryRun?: boolean;
+    }) {
+      const pid = projectIdOrThrow(input.projectId);
+      const method = (input.method || "GET").trim().toUpperCase();
+      const path = input.path.startsWith("/") ? input.path : `/${input.path}`;
+      if (!input.title.trim()) {
+        throw new YapiError("缺少 title");
+      }
+      if (!input.path.trim()) {
+        throw new YapiError("缺少 path");
+      }
+      if (input.resBody && input.resBodyType !== "raw") {
+        JSON.parse(input.resBody);
+      }
+      const cats = await client.get<Array<{ _id: number; name: string }>>(
+        "/api/interface/getCatMenu",
+        { project_id: pid },
+        { session: true, projectId: pid }
+      );
+      const list = cats || [];
+      const cat = input.catId
+        ? list.find((item) => item._id === input.catId)
+        : input.catName
+          ? list.find((item) => item.name === input.catName)
+          : list.find((item) => item.name === "公共分类") || list[0];
+      if (!cat) {
+        throw new YapiError("找不到分类：请传入 catId / catName，或先在 YApi 项目里建一个分类");
+      }
+      const payload = {
+        title: input.title.trim(),
+        path,
+        method,
+        catid: cat._id,
+        project_id: pid,
+        desc: input.desc || ""
+      };
+      if (input.dryRun) {
+        return { dryRun: true as const, wouldWrite: payload, category: { id: cat._id, name: cat.name } };
+      }
+      const created = await client.post<{ _id?: number; id?: number }>(
+        "/api/interface/add",
+        payload,
+        { session: true, projectId: pid }
+      );
+      const interfaceId = created?._id ?? created?.id;
+      if (!interfaceId) {
+        throw new YapiError("新建接口成功但未返回 ID");
+      }
+      if (input.resBody) {
+        await this.updateInterfaceMock({
+          interfaceId,
+          projectId: pid,
+          resBody: input.resBody,
+          resBodyType: input.resBodyType,
+          resBodyIsJsonSchema: input.resBodyIsJsonSchema
+        });
+      }
+      return {
+        dryRun: false as const,
+        created: await getInterface(interfaceId, pid),
+        category: { id: cat._id, name: cat.name }
+      };
+    },
+
     async updateInterfaceMock(input: {
       interfaceId: number;
       projectId?: number;

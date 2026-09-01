@@ -1,196 +1,232 @@
-# YApi Mock MCP — 操作说明
+# yapi-mcp-zhh
 
-在 Cursor 里改内网 YApi 的 Mock（返回体、高级脚本、期望），不用再打开 YApi 网页点保存。
+**YApi Mock MCP**：面向 [YApi](https://github.com/YMFE/yapi) 的 [MCP](https://modelcontextprotocol.io) 服务。在支持 MCP 的客户端里列出项目、搜索/新建接口、改 Mock（返回体、高级脚本、期望），并打 mock URL 确认是否生效。
 
-先分清三个东西，后面才不会配错：
+包名与仓库均为 `yapi-mcp-zhh`。
 
-| 名字 | 是什么 |
-| --- | --- |
-| **本仓库** | 这份 MCP 工具源码。clone、`npm install` 都针对它 |
-| **你们前端业务仓库** | 页面代码。不用把本工具嵌进去 |
-| **YApi 项目** | YApi 网页上的接口集合，有一个数字 ID。那是配置项，不是 git |
+需要：**Node.js 20+**，以及本机能访问目标 YApi（内网即可）。
 
-代码在 GitHub：<https://github.com/zhanghaha416/yapi-mcp-zhh>  
-自己用、给同事用，都先 clone 这份仓库（不是你们前端业务仓库）。
+## 架构
 
-需要：Node.js 20+、本机能访问你们的 YApi。
+客户端只走 MCP；本进程把工具转成对 YApi 的 HTTP。stdio 和 HTTP 共用同一套 Tools / `YapiClient`。
 
----
+```mermaid
+flowchart LR
+  subgraph clients [MCP 客户端]
+    C[Cursor / Claude / Codex]
+    W[WorkBuddy]
+  end
 
-## 一、自己本机接到 Cursor（按这个做就行）
+  subgraph this [yapi-mcp-zhh]
+    P[stdio 或 HTTP /mcp]
+    M[MCP Server]
+    T[Tools]
+    Y[YapiClient]
+  end
 
-### 1. 把本仓库弄到本机
+  subgraph dest [数据]
+    A[YApi]
+    D[内存演示]
+  end
+
+  C --> P
+  W --> P
+  P --> M --> T --> Y
+  Y --> A
+  Y --> D
+```
+
+未配 `YAPI_BASE_URL` 或 `YAPI_DEMO=true` 时走演示，不写真实 YApi。`npm start` 额外提供浏览器演示台，和 MCP 是同一套 Tools。
+
+## 能做什么 / 不能做什么
+
+YApi Mock 生效顺序：**期望 > 高级脚本 > 接口返回体**。
+
+| 能力 | 说明 | 鉴权 |
+| --- | --- | --- |
+| 列项目、搜接口 | 登录账号能看到的分组/项目 | 登录态 |
+| 新建接口 | 标题、路径、方法、分类；可选顺带写返回体 | 登录态 |
+| 读/改普通 Mock（`res_body`） | 接口编辑页里的返回数据 / JSON Schema | **项目 Token** |
+| 读/改高级 Mock 脚本 | 官方 advanced-mock 插件，整段覆盖 | 登录态 |
+| 增删改 Mock 期望 | 按请求参数匹配不同 JSON | 登录态 |
+| 试打 Mock | `GET/POST …/mock/{projectId}{path}` | 一般不需要登录 |
+
+**不会做：** 改请求参数文档、删接口、改项目设置、部署业务代码。
+
+项目 Token 和登录密码不是一回事：Token 只管普通返回体；脚本和期望必须登录（或 Cookie）。
+
+## 安装
 
 ```bash
 git clone https://github.com/zhanghaha416/yapi-mcp-zhh.git
 cd yapi-mcp-zhh
-```
-
-### 2. 安装依赖并编译
-
-```bash
 npm install
 npm run build
 ```
 
-成功后会有文件：
+编译后 stdio 入口：
 
 ```text
 dist/server/mcp-stdio.js
 ```
 
-Cursor 真正启动的是这个 js，记住它的**绝对路径**。
+请使用该文件的**绝对路径**。也可 `npm run mcp`（等价 `node dist/server/mcp-stdio.js`）。
 
-- macOS / Linux 示例：`/Users/xiaoming/yapi-mcp-zhh/dist/server/mcp-stdio.js`
-- Windows 示例：`C:\tools\yapi-mcp-zhh\dist\server\mcp-stdio.js`
+## 接入方式
 
-### 3. 打开 Cursor 的 MCP 配置
+标准 MCP：本机用 **stdio**（客户端拉起 `dist/server/mcp-stdio.js`，不必 `npm start`），或连已启动的 **HTTP** `/mcp`。模板：[share/mcp.stdio.json](share/mcp.stdio.json)、[share/mcp.http.json](share/mcp.http.json)。
 
-Cursor → Settings → MCP → 编辑配置（或直接改本机的 `~/.cursor/mcp.json`）。
+`command` 建议用 Node 20+ 的绝对路径，避免客户端默认到旧 Node。
 
-把仓库里 `share/mcp.stdio.json` **整段拷进去**，然后改下面几项。
-
-### 4. 改路径和账号
+stdio 配置骨架（改绝对路径和账号）：
 
 ```json
 {
   "mcpServers": {
     "yapi-mock": {
       "command": "node",
-      "args": ["/改成你本机的绝对路径/dist/server/mcp-stdio.js"],
+      "args": ["/absolute/path/to/yapi-mcp-zhh/dist/server/mcp-stdio.js"],
       "env": {
-        "YAPI_BASE_URL": "http://你们公司的yapi地址",
-        "YAPI_PROJECT_ID": "123",
-        "YAPI_TOKEN": "YApi项目设置里的token",
-        "YAPI_EMAIL": "你的登录名",
-        "YAPI_PASSWORD": "你的密码"
+        "YAPI_BASE_URL": "http://yapi.example.com",
+        "YAPI_PROJECT_TOKENS": "111:tokenA,222:tokenB",
+        "YAPI_EMAIL": "you@example.com",
+        "YAPI_PASSWORD": "your-password"
       }
     }
   }
 }
 ```
 
-| 字段 | 去哪找 | 不填会怎样 |
-| --- | --- | --- |
-| `args` 里的路径 | 第 2 步编出来的 js | Cursor 起不来 MCP |
-| `YAPI_BASE_URL` | 浏览器打开 YApi 时的地址，末尾不要 `/` | 走内存演示数据，改不到真 YApi |
-| `YAPI_TOKEN` | YApi → 项目 → 设置 → Token | 改不了接口返回体 |
-| `YAPI_EMAIL` / `YAPI_PASSWORD` | 登录 YApi 的账号（LDAP 也把登录名填在 EMAIL） | 改不了高级脚本和期望，会提示请登录 |
-| `YAPI_PROJECT_ID` | YApi 网址里的项目数字，或项目设置页 | 搜列表时可能要先问项目；已经知道接口 ID 时可以不填 |
+### Cursor、Claude、Codex
 
-内网 HTTPS 证书不受信任时，再加一行：`"YAPI_INSECURE_TLS": "true"`。
+这几家 JSON 几乎一样，都是 `mcpServers` + `command` / `args` / `env`（HTTP 则是 `url` + `headers`）。差别主要是**写到哪个文件**：
 
-不想把密码写进配置：从浏览器拷 `_yapi_token`、`_yapi_uid`，改成 `"YAPI_COOKIE": "_yapi_token=...; _yapi_uid=..."`，可以去掉 PASSWORD。
+| 客户端 | 常见做法 |
+| --- | --- |
+| Cursor | `~/.cursor/mcp.json`，或 Settings → MCP → 编辑配置 |
+| Claude Desktop | 官方 MCP 配置文件（同样贴上一段） |
+| Codex | 按其 MCP 文档写入，字段与上面相同 |
 
-### 5. 保存并看 MCP 是否亮起来
+保存后刷新 MCP 列表，应出现 `yapi-mock`。
 
-保存配置，必要时重载 Cursor。MCP 列表里应出现 `yapi-mock`。
+### WorkBuddy
 
-在对话里试一句：
+JSON 可以原样用上面这段，但入口不一样：
 
-> 列出我能访问的 YApi 项目，再搜一下 /api/order/list
+1. WorkBuddy → **Connections → Custom connections → Configure MCP**（会打开本机 `~/.workbuddy/mcp.json`）。
+2. 把 `yapi-mock` 合并进去并保存。
+3. 在连接管理里把该 MCP **打开开关**，工具才会进对话（只存文件、不打开开关，经常调不到）。
 
-或：
+HTTP 模式把 `share/mcp.http.json` 里的 `url` / `Authorization` 写进同一文件即可。
 
-> 把某个接口的空列表 Mock 期望改成返回 0 条，并打一次 mock 确认
-
----
-
-## 二、先不接 YApi，只想看演示
-
-在本仓库目录：
-
-```bash
-npm install
-npm run build
-npm start
-```
-
-浏览器打开本机提示的地址（默认 `http://127.0.0.1:43181`）。这是演示台，数据在内存里，**不会写到公司 YApi**。
-
-这和 Cursor MCP 是同一套能力；接真环境仍然要走第一节的配置。
-
----
-
-## 三、给组内同事
-
-**不是拷一条 MCP 链接就结束。** 同事电脑上也要有这份工具（或连你们内网的一台 HTTP 服务）。
-
-### 方式 A：每人本机一份（推荐，权限跟个人账号走）
-
-把仓库地址发给同事即可：
-
-https://github.com/zhanghaha416/yapi-mcp-zhh
-
-让他们按**第一节**做一遍（clone → install → build → 改自己的路径和账号）。
-
-每人改自己的：
-
-- js 的绝对路径（每人电脑路径不一样）
-- 自己的 YApi Token / 登录账号
-
-不要把你的密码写进仓库再推上去。
-
-### 方式 B：组里一台机器，同事只贴 URL
-
-适合「大家共用一个联调账号、同事不想 install」。
-
-在一台能访问 YApi 的机器上：
+### HTTP（一台机器给多人）
 
 ```bash
 cp .env.example .env
-# 编辑 .env：YApi 地址、Token、登录账号
-# 再写一长串随机令牌，例如：
-# MCP_HTTP_AUTH_TOKEN=用 openssl rand -hex 24 生成
+# 填写 YApi 地址、Token、登录账号
+# 连真 YApi 时必须设置 MCP_HTTP_AUTH_TOKEN（例如 openssl rand -hex 24）
 npm install
 npm run build
 npm start
 ```
 
-同事 Cursor 配置用 `share/mcp.http.json`：
+默认：
+
+| 地址 | 用途 |
+| --- | --- |
+| `http://127.0.0.1:43181/mcp` | MCP（Streamable HTTP） |
+| `http://127.0.0.1:43181/` | 本机演示台（浏览器） |
+
+客户端示例：
 
 ```json
 {
   "mcpServers": {
     "yapi-mock": {
-      "url": "http://那台机器的内网IP:43181/mcp",
+      "url": "http://host:43181/mcp",
       "headers": {
-        "Authorization": "Bearer 和服务器上MCP_HTTP_AUTH_TOKEN一样"
+        "Authorization": "Bearer <与服务器 MCP_HTTP_AUTH_TOKEN 相同>"
       }
     }
   }
 }
 ```
 
-同事拿不到 YApi 密码，但写出的 Mock 都算服务器上那个账号。连真 YApi 时必须设 `MCP_HTTP_AUTH_TOKEN`，不要把端口开到公网。
+写出的 Mock 都算**服务器上那个 YApi 账号**。不要把端口暴露到公网。
 
----
+## 环境变量
 
-## 四、Cursor 里能做什么
+可写在客户端 `env` 里，HTTP 模式也可写在 `.env`（见 `.env.example`）。
 
-| 你想做的事 | 对应工具 |
+| 变量 | 必填 | 说明 |
+| --- | --- | --- |
+| `YAPI_BASE_URL` | 接真环境时必填 | YApi 源站，末尾不要 `/`。不填或 `YAPI_DEMO=true` 时走内存演示，不会写入真实 YApi |
+| `YAPI_PROJECT_ID` | 否 | 工具省略 `projectId` 时的默认项目 |
+| `YAPI_TOKEN` | 改普通返回体时需要 | 单个项目 Token（项目 → 设置 → Token） |
+| `YAPI_PROJECT_TOKENS` | 多项目时推荐 | `项目ID:token`，逗号分隔。切项目不用改配置，对话里带项目 ID 即可 |
+| `YAPI_EMAIL` / `YAPI_PASSWORD` | 列项目、新建接口、脚本、期望需要 | LDAP 把登录名填在 EMAIL |
+| `YAPI_COOKIE` | 否 | 浏览器里的 `_yapi_token=…; _yapi_uid=…`，可代替密码 |
+| `YAPI_INSECURE_TLS` | 否 | 内网 HTTPS 证书不受信任时设为 `true` |
+| `YAPI_DEMO` | 否 | `true` 强制演示后端 |
+| `PORT` | 否 | HTTP / 演示台端口，默认 `43181` |
+| `MCP_HTTP_AUTH_TOKEN` | 连真 YApi 的 HTTP MCP 必填 | 客户端放在 `Authorization: Bearer` |
+
+密钥只放在本地客户端配置或 `.env` 中，不要提交到 git。
+
+## 工具一览
+
+| 工具 | 做什么 |
 | --- | --- |
-| 不知道项目 ID | `yapi_list_projects` |
-| 按路径/标题找接口 | `yapi_search_interfaces` |
-| 看/改接口返回体（普通 Mock） | `yapi_get_interface_mock` / `yapi_update_interface_mock` |
-| 看/改高级 Mock 脚本 | `yapi_get_advanced_mock` / `yapi_update_advanced_mock` |
-| 看/增/删 Mock 期望 | `yapi_list_mock_cases` / `yapi_save_mock_case` / `yapi_delete_mock_case` |
-| 打 mock 地址确认是否生效 | `yapi_call_mock` |
+| `yapi_list_projects` | 列出当前账号能看到的项目 |
+| `yapi_search_interfaces` | 按标题、路径、方法搜索；`keyword` 为空则列出（受已知项目 ID 限制） |
+| `yapi_create_interface` | 新建接口。不传分类时优先「公共分类」，否则第一个分类；可带 `resBody` |
+| `yapi_get_interface_mock` | 读返回体和 mock URL |
+| `yapi_update_interface_mock` | 写普通 Mock 返回体 |
+| `yapi_get_advanced_mock` / `yapi_update_advanced_mock` | 读/覆盖高级脚本 |
+| `yapi_list_mock_cases` / `yapi_save_mock_case` / `yapi_delete_mock_case` | Mock 期望 |
+| `yapi_call_mock` | 请求 mock URL，确认写入是否生效 |
 
-YApi Mock 优先级：**期望 > 脚本 > 接口返回体**。项目 Token 只能改返回体；脚本和期望必须登录态。
+新建接口主要参数：`title`、`path`，可选 `method`（默认 GET）、`projectId`、`catId` / `catName`、`resBody`。
 
----
+对话里可以这样试：
 
-## 五、常见问题
+> 列出我能访问的 YApi 项目，再搜 /api/order/list  
+> 在某项目新建 GET /mcp/ping，返回 `{"ok":true}`，并打一次 mock
 
-**MCP 起不来**  
-`args` 不是绝对路径，或还没 `npm run build`，本机没有 `dist/server/mcp-stdio.js`。
+## 仅本地演示
 
-**搜接口说缺 projectId**  
-补 `YAPI_PROJECT_ID`，或 Token 写成 `项目ID:token`。也可以先让助手调 `yapi_list_projects`。
+```bash
+npm install
+npm run build
+npm start
+```
 
-**改脚本提示请登录**  
-只配了项目 Token 不够。补 `YAPI_EMAIL` + `YAPI_PASSWORD`，或 `YAPI_COOKIE`。
+打开 `http://127.0.0.1:43181`。数据在进程内存里。stdio 把 `YAPI_DEMO` 设为 `true`、或不设 `YAPI_BASE_URL`，效果相同。
+
+开发热更新：`npm run dev`。
+
+## 常见问题
+
+**客户端起不来 MCP**  
+stdio 的 `args` 不是绝对路径，或还没 `npm run build`。Node 版本低于 20 也会失败。
+
+**搜接口不知道项目**  
+配 `YAPI_PROJECT_ID`，或 `YAPI_PROJECT_TOKENS=项目ID:token`。也可以先调 `yapi_list_projects`（需要登录）。
+
+**改返回体失败、改脚本提示请登录**  
+普通返回体要项目 Token；脚本/期望/新建/列项目要 `YAPI_EMAIL` + `YAPI_PASSWORD` 或 `YAPI_COOKIE`。
+
+**切项目还要改配置吗**  
+不用。把常用项目写进 `YAPI_PROJECT_TOKENS`。只有新项目要改普通返回体、且还没配过 Token 时才补一行。
 
 **改了但前端还是旧数据**  
-用 `yapi_call_mock` 打 `${YAPI_BASE_URL}/mock/{项目ID}{接口路径}`。浏览器缓存或本地代理没指到 YApi mock 时，页面不会变。
+用 `yapi_call_mock` 打 `{YAPI_BASE_URL}/mock/{项目ID}{接口路径}`。浏览器缓存或本地代理没指到 YApi mock 时，页面不会变。
+
+## 开发
+
+```bash
+npm test
+npm run typecheck
+```
+
+协议实现：`@modelcontextprotocol/sdk`。stdio 入口 `src/server/mcp-stdio.ts`，HTTP 挂载 `src/server/mcp-http.ts`。
