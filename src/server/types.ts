@@ -24,6 +24,7 @@ export type AppConfig = {
   insecureTls: boolean;
   demo: boolean;
   port: number;
+  loginMode: "auto" | "ldap" | "password";
 };
 
 export type InterfaceSummary = {

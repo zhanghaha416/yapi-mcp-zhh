@@ -9,6 +9,17 @@ function readNumber(name: string): number | undefined {
   return Number.isFinite(value) ? value : undefined;
 }
 
+function parseLoginMode(): AppConfig["loginMode"] {
+  const raw = (process.env.YAPI_LOGIN || "auto").trim().toLowerCase();
+  if (raw === "ldap" || raw === "domain") {
+    return "ldap";
+  }
+  if (raw === "password" || raw === "local") {
+    return "password";
+  }
+  return "auto";
+}
+
 function parseTokens(): ProjectTokenMap {
   const map: ProjectTokenMap = new Map();
   const multi = process.env.YAPI_PROJECT_TOKENS?.trim();
@@ -56,6 +67,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     insecureTls: process.env.YAPI_INSECURE_TLS === "true",
     demo,
     port,
+    loginMode: parseLoginMode(),
     ...overrides
   };
 }

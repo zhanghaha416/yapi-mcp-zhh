@@ -74,19 +74,40 @@ export class YapiClient {
     if (!this.config.email || !this.config.password) {
       throw new YapiError("高级 Mock 需要登录态：请配置 YAPI_EMAIL / YAPI_PASSWORD，或提供 YAPI_COOKIE");
     }
-    const result = await this.request<unknown>(
-      "POST",
-      "/api/user/login",
-      {
-        email: this.config.email,
-        password: this.config.password
-      },
-      { skipAuth: true, allowLoginError: true }
-    );
-    if (result.errcode !== 0) {
-      throw new YapiError(result.errmsg || "YApi 登录失败", result.errcode, "/api/user/login");
+    const mode = this.config.loginMode || "auto";
+    const paths =
+      mode === "password"
+        ? ["/api/user/login"]
+        : mode === "ldap"
+          ? ["/api/user/login_by_ldap"]
+          : ["/api/user/login_by_ldap", "/api/user/login"];
+
+    let lastError: YapiError | undefined;
+    for (const path of paths) {
+      try {
+        const result = await this.request<unknown>(
+          "POST",
+          path,
+          {
+            email: this.config.email,
+            password: this.config.password,
+            username: this.config.email
+          },
+          { skipAuth: true, allowLoginError: true }
+        );
+        if (result.errcode === 0) {
+          this.loggedIn = true;
+          return;
+        }
+        lastError = new YapiError(result.errmsg || "YApi 登录失败", result.errcode, path);
+      } catch (error) {
+        lastError =
+          error instanceof YapiError
+            ? error
+            : new YapiError(error instanceof Error ? error.message : String(error), undefined, path);
+      }
     }
-    this.loggedIn = true;
+    throw lastError || new YapiError("YApi 登录失败");
   }
 
   async ensureSession(): Promise<void> {

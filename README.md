@@ -140,7 +140,8 @@ npm start
 | `YAPI_PROJECT_ID` | 否 | 工具省略 `projectId` 时的默认项目 |
 | `YAPI_TOKEN` | 改普通返回体时需要 | 单个项目 Token（项目 → 设置 → Token） |
 | `YAPI_PROJECT_TOKENS` | 多项目时推荐 | `项目ID:token`，逗号分隔。切项目不用改配置，对话里带项目 ID 即可 |
-| `YAPI_EMAIL` / `YAPI_PASSWORD` | 列项目、新建接口、脚本、期望需要 | LDAP 把登录名填在 EMAIL |
+| `YAPI_EMAIL` / `YAPI_PASSWORD` | 列项目、新建接口、脚本、期望需要 | 域账号或邮箱都可以。默认先走 `/api/user/login_by_ldap`，失败再走 `/api/user/login` |
+| `YAPI_LOGIN` | 否 | `auto`（默认）/ `ldap` / `password`。`domain` 等同 `ldap` |
 | `YAPI_COOKIE` | 否 | 浏览器里的 `_yapi_token=…; _yapi_uid=…`，可代替密码 |
 | `YAPI_INSECURE_TLS` | 否 | 内网 HTTPS 证书不受信任时设为 `true` |
 | `YAPI_DEMO` | 否 | `true` 强制演示后端 |
@@ -190,7 +191,7 @@ stdio 的 `args` 不是绝对路径，或还没 `npm run build`。Node 版本低
 配 `YAPI_PROJECT_ID`，或 `YAPI_PROJECT_TOKENS=项目ID:token`。也可以先调 `yapi_list_projects`（需要登录）。
 
 **改返回体失败、改脚本提示请登录**  
-普通返回体要项目 Token；脚本/期望/新建/列项目要 `YAPI_EMAIL` + `YAPI_PASSWORD` 或 `YAPI_COOKIE`。
+普通返回体要项目 Token；脚本/期望/新建/列项目要 `YAPI_EMAIL` + `YAPI_PASSWORD` 或 `YAPI_COOKIE`。默认优先域账户（LDAP）登录，不通再试普通登录。
 
 **切项目还要改配置吗**  
 不用。把常用项目写进 `YAPI_PROJECT_TOKENS`。只有新项目要改普通返回体、且还没配过 Token 时才补一行。

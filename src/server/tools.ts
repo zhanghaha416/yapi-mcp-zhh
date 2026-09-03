@@ -146,7 +146,8 @@ export function createTools(config: AppConfig, client = new YapiClient(config)) 
         hasToken: config.tokens.size > 0,
         hasPassword: Boolean(config.email && config.password),
         hasCookie: Boolean(config.cookie),
-        insecureTls: config.insecureTls
+        insecureTls: config.insecureTls,
+        loginMode: config.loginMode
       };
     },
 

@@ -180,6 +180,43 @@ export function createDemoYapi() {
   const requireLogin = (cookieHeader: string | undefined) =>
     Boolean(cookieHeader && cookieHeader.includes(store.token));
 
+  const issueLoginCookies = (c: { header: (name: string, value: string, opts?: { append?: boolean }) => void }) => {
+    c.header("Set-Cookie", `_yapi_token=${store.token}; Path=/`, { append: true });
+    c.header("Set-Cookie", `_yapi_uid=${store.uid}; Path=/`, { append: true });
+  };
+
+  const loginOk = (c: { header: (name: string, value: string, opts?: { append?: boolean }) => void; json: (v: unknown) => Response }, email: string) => {
+    issueLoginCookies(c);
+    return c.json(
+      envelope({
+        username: email,
+        uid: store.uid,
+        email,
+        add_time: Date.now(),
+        up_time: Date.now(),
+        role: "admin",
+        type: "site",
+        study: false
+      })
+    );
+  };
+
+  app.post("/api/user/login_by_ldap", async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as {
+      email?: string;
+      password?: string;
+      username?: string;
+    };
+    const account = body.email || body.username;
+    if (!account || !body.password) {
+      return c.json(envelope(null, 400, "用户名或密码不能为空"));
+    }
+    if (!/ldap|@corp/i.test(account) && !account.includes("\\")) {
+      return c.json(envelope(null, 404, "非LDAP账户"));
+    }
+    return loginOk(c, account);
+  });
+
   app.post("/api/user/login", async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as {
       email?: string;
@@ -188,20 +225,7 @@ export function createDemoYapi() {
     if (!body.email || !body.password) {
       return c.json(envelope(null, 400, "邮箱或密码不能为空"));
     }
-    c.header("Set-Cookie", `_yapi_token=${store.token}; Path=/`, { append: true });
-    c.header("Set-Cookie", `_yapi_uid=${store.uid}; Path=/`, { append: true });
-    return c.json(
-      envelope({
-        username: body.email,
-        uid: store.uid,
-        email: body.email,
-        add_time: Date.now(),
-        up_time: Date.now(),
-        role: "admin",
-        type: "site",
-        study: false
-      })
-    );
+    return loginOk(c, body.email);
   });
 
   app.get("/api/group/list", (c) => {
